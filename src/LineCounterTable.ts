@@ -41,6 +41,7 @@ export class LineCounterTable {
     public entries = () => this.langExtensions;
 
     public getCounter(filePath: string, langId?: string) {
+        console.log('=-=-=-> class LineCounterTable > getCounter > filePath: ', filePath)
         // priority
         return this.getByAssociations(filePath)
             || this.filenameRules.get(path.basename(filePath))

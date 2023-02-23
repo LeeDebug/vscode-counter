@@ -10,6 +10,11 @@ export class Count {
     get total() { return this.code + this.comment + this.blank; }
     get isEmpty() { return (this.code === 0) && (this.comment === 0) && (this.blank === 0); }
     add(value: Count) {
+        // console.log('=-=-=-> class Count > add() > value: ', value)
+        // console.log('=-=-=-> class Count > add() > JSON value: ', JSON.stringify(value, null, 4))
+        // console.log('=-=-=-> class Count > add() > value.code: ', value.code)
+        // console.log('=-=-=-> class Count > add() > value.comment: ', value.comment)
+        // console.log('=-=-=-> class Count > add() > value.blank: ', value.blank)
         this.code += value.code;
         this.comment += value.comment;
         this.blank += value.blank;
@@ -54,10 +59,13 @@ export class LineCounter {
             this.blockStringBegins = this.blockStrings.map(b => b[0]);
     }
     public count(text: string): Count {
+        console.log('=-=-=-> class LineCounter > count() > text: ', text)
         let result = [0, 0, 0];
         let blockCommentEnd = '';
         let blockStringEnd = '';
+        console.log('=-=-=-> class LineCounter > count() > text.split(/\r\n|\r|\n/):\n', JSON.stringify(text.split(/\r\n|\r|\n/), null, 4))
         text.split(/\r\n|\r|\n/).map(line => line.trim()).forEach((line, lineIndex) => {
+            console.log('=-=-=-> class LineCounter > count() > map.forEach > line: ', line)
             let type = (blockCommentEnd.length > 0) ? LineType.Comment : (blockStringEnd.length > 0) ? LineType.Code : LineType.Blank;
             let i = 0;
             while (i < line.length) {
@@ -113,6 +121,8 @@ export class LineCounter {
             result[type]++;
             // console.log(`${lineIndex+1} [${LineType[type]}]   ${line}`);
         });
+        console.log('=-=-=-> class LineCounter > count() >LineType:\n', JSON.stringify(LineType, null, 4))
+        console.log('=-=-=-> class LineCounter > count() >result:\n', JSON.stringify(result, null, 4))
         return new Count(result[LineType.Code], result[LineType.Comment], result[LineType.Blank],);
     }
 }

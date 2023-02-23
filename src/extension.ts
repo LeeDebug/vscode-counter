@@ -171,7 +171,7 @@ class CodeCounterController {
         const langs = new Map<string, LanguageConf>();
         Object.entries(internalDefinitions).forEach(v => append(langs, v[0], v[1]));
         Object.entries(await loadLanguageConfigurations(this.conf)).forEach(v => append(langs, v[0], v[1]));
-        
+
         log(`load Language Settings = ${langs.size}`);
         await collectLanguageConfigurations(langs);
         log(`collect Language Settings = ${langs.size}`);
@@ -211,6 +211,11 @@ class CodeCounterController {
         const folder = await currentWorkspaceFolder();
         await this.countLinesInDirectory_(folder.uri, folder.uri);
     }
+    /**
+     * 
+     * @param targetUri 当前检测文件夹的路径
+     * @param workspaceDir 整个项目的根目录
+     */
     private async countLinesInDirectory_(targetUri: vscode.Uri, workspaceDir: vscode.Uri) {
         const date = new Date();
         const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -218,11 +223,15 @@ class CodeCounterController {
             statusBar.show();
             statusBar.text = `VSCodeCounter: Preparing...`;
 
+            log(`=-=-=-> workspaceDir : "${workspaceDir}"`);
+            log(`=-=-=-> targetUri : "${targetUri}"`);
             const outputDir = buildUri(workspaceDir, this.conf.outputDirectory);
             log(`include : "${this.conf.include}"`);
             log(`exclude : "${this.conf.exclude}"`);
             const files = await vscode.workspace.findFiles(`{${this.conf.include}}`, `{${this.conf.exclude},${vscode.workspace.asRelativePath(outputDir)}}`);
+            // 当前检测目录下，所有的文件路径
             let targetFiles = files.filter(uri => !path.relative(targetUri.path, uri.path).startsWith(".."));
+            log(`=-=-=-> targetFiles : "${targetFiles}"`);
             if (this.conf.useGitignore) {
                 log(`target : ${targetFiles.length} files -> use .gitignore`);
                 const gitignores = await loadGitIgnore();
@@ -230,6 +239,7 @@ class CodeCounterController {
             }
 
             const counter = await this.getCodeCounter();
+            log(`=-=-=-> counter : "${JSON.stringify(counter, null, 0)}"`);
             const results = await countLines(counter, targetFiles, this.conf.maxOpenFiles, this.conf.encoding, this.conf.ignoreUnsupportedFile, (msg: string) => statusBar.text = `VSCodeCounter: ${msg}`);
             if (results.length <= 0) {
                 throw Error(`There was no target file.`);
@@ -332,6 +342,7 @@ const countLines = (lineCounterTable: LineCounterTable, fileUris: vscode.Uri[], 
         for (let i = 0; i < totalFiles; ++i) {
             const fileUri = fileUris[i];
             const lineCounter = lineCounterTable.getCounter(fileUri.fsPath);
+            console.log('=-=-=-> countLines > lineCounter:\n', JSON.stringify(lineCounter, null, 4))
             if (lineCounter) {
 
                 while ((i - fileCount) >= maxOpenFiles) {
@@ -340,13 +351,39 @@ const countLines = (lineCounterTable: LineCounterTable, fileUris: vscode.Uri[], 
                     await sleep(50);
                 }
 
-                vscode.workspace.fs.readFile(fileUri).then(data => {
+                vscode.workspace.fs.readFile(fileUri).then(data => { // Buffer
                     try {
+                        /**
+                         * 计算出了结果，示例如下：
+                         */
+                        // [
+                        //     {
+                        //         "code": 11,
+                        //         "comment": 2,
+                        //         "blank": 3,
+                        //         "uri": {
+                        //             "$mid": 1,
+                        //             "fsPath": "c:\\_lichunchun.ex\\Code\\WEB_APP_2.0_PLUS\\vidaa_apps\\src\\core\\direction\\index.js",
+                        //             "_sep": 1,
+                        //             "external": "file:///c%3A/_lichunchun.ex/Code/WEB_APP_2.0_PLUS/vidaa_apps/src/core/direction/index.js",
+                        //             "path": "/c:/_lichunchun.ex/Code/WEB_APP_2.0_PLUS/vidaa_apps/src/core/direction/index.js",
+                        //             "scheme": "file"
+                        //         },
+                        //         "filename": "c:\\_lichunchun.ex\\Code\\WEB_APP_2.0_PLUS\\vidaa_apps\\src\\core\\direction\\index.js",
+                        //         "language": "JavaScript"
+                        //     }
+                        // ]
+                        console.log('=-=-=-> countLines > fileUri: ', fileUri)
+                        console.log('=-=-=-> countLines > lineCounter.name: ', lineCounter.name)
+                        console.log('=-=-=-> countLines > decoder.decode(data):\n', JSON.stringify(decoder.decode(data), null, 4))
+                        console.log('=-=-=-> countLines > lineCounter.count: ', lineCounter.count)
+                        console.log('=-=-=-> countLines > ineCounter.count(decoder.decode(data)):\n', JSON.stringify(lineCounter.count(decoder.decode(data)), null, 4))
                         results.push(new Result(fileUri, lineCounter.name, lineCounter.count(decoder.decode(data))));
                     } catch (e: any) {
                         log(`"${fileUri}" Read Error : ${e.message}.`);
                         results.push(new Result(fileUri, '(Read Error)'));
                     }
+                    console.log('=-=-=-> results 222:\n', JSON.stringify(results, null, 4))
                     onFinish();
                 },
                     (reason: any) => {
@@ -558,6 +595,8 @@ class Result extends Count {
         this.language = language;
     }
     clone() {
+        // console.log('=-=-=-> class Result > this.uri: ', this.uri)
+        // console.log('=-=-=-> class Result > this.language: ', this.language)
         return new Result(this.uri, this.language, this);
     }
 }
@@ -619,9 +658,13 @@ class ResultFormatter {
 
         const directLevelResultTable = new Map<string, Statistics>();
         results.forEach((result) => {
+            // console.log('=-=-=-> class ResultFormatter > result: ', result)
+            // console.log('=-=-=-> class ResultFormatter > result:\n', JSON.stringify(result, null, 4))
             let parent = path.dirname(path.relative(this.targetDirUri.fsPath, result.filename));
+            // console.log('=-=-=-> 111111111111: ', 111111111111)
             getOrSet(directLevelResultTable, parent, () => new Statistics(parent + " (Files)")).add(result);
             while (parent.length >= 0) {
+                // console.log('=-=-=-> 22222222222: ', 22222222222)
                 getOrSet(this.dirResultTable, parent, () => new Statistics(parent)).add(result);
                 const p = path.dirname(parent);
                 if (p === parent) {
@@ -629,9 +672,14 @@ class ResultFormatter {
                 }
                 parent = p;
             }
+            // console.log('=-=-=-> 33333333333: ', 33333333333)
             getOrSet(this.langResultTable, result.language, () => new Statistics(result.language)).add(result);
+            // console.log('=-=-=-> 44444444444: ', 44444444444)
             this.total.add(result);
+            // console.log('=-=-=-> 5555555555: ', 5555555555)
         });
+        // console.log('=-=-=-> class ResultFormatter > conf:\n', JSON.stringify(conf, null, 4))
+        // console.log('=-=-=-> class ResultFormatter > conf.countDirectLevelFiles: ', conf.countDirectLevelFiles)
         if (conf.countDirectLevelFiles) {
             [...directLevelResultTable.entries()].filter(([key, value]) => {
                 log(`  dir[${value.name}] total=${value.total}  ${(this.dirResultTable.get(key)?.total??0)}` );
