@@ -1,11 +1,11 @@
 {
-  "name": "vscode-counter",
-  "displayName": "VS Code Counter",
+  "name": "vscode-counter-hisense",
+  "displayName": "VS Code Counter Hisense",
   "description": "Count lines of code in many programming languages.",
   "version": "3.2.0",
-  "publisher": "uctakeoff",
+  "publisher": "Edan.Li",
   "author": {
-    "name": "Ushiyama Kentaro"
+    "name": "Edan.Li"
   },
   "engines": {
     "vscode": "^1.63.1"

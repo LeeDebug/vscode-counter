@@ -1,6 +1,6 @@
 {
   "commands.countInFile.title": "Toggle Real-time Counter Visibility",
-  "commands.countInDirectory.title": "Count lines in directory",
+  "commands.countInDirectory.title": "Count lines in directory - Edan",
   "commands.countInWorkspace.title": "Count lines in workspace",
   "commands.outputAvailableLanguages.title": "Check available languages",
   "commands.saveLanguageConfigurations.title": "Save the collected language configurations",

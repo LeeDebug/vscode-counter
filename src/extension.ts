@@ -9,7 +9,7 @@ import Gitignore from './Gitignore';
 import { buildUri, createTextDecoder, currentWorkspaceFolder, dirUri, makeDirectories, parseUriOrFile, readJsonFile, readUtf8Files, showTextPreview, writeTextFile } from './vscode-utils';
 import { internalDefinitions } from './internalDefinitions';
 
-const EXTENSION_ID = 'uctakeoff.vscode-counter';
+const EXTENSION_ID = 'Edan.Li.vscode-counter-hisense';
 const EXTENSION_NAME = 'VSCodeCounter';
 const CONFIGURATION_SECTION = 'VSCodeCounter';
 const toZeroPadString = (num: number, fig: number) => num.toString().padStart(fig, '0');
